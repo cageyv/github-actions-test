@@ -60,5 +60,8 @@ jobs:
           echo $GITHUB_REF
           echo "${GITHUB_REF#refs/heads/}":refs/heads/"$GIT_DESTINATION_BRANCH"
           echo $GIT_REMOTE
+          echo "needs.prepare.outputs.sha: ${{ needs.prepare.outputs.sha }}"
+          echo "needs.prepare.outputs.date: ${{ needs.prepare.outputs.date }}"
+          echo "needs.prepare.outputs.test: ${{ needs.prepare.outputs.test }}"
 
 
