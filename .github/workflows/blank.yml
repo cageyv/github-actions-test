@@ -16,19 +16,8 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ github.sha }}
-      date: "$(date -u --iso-8601=seconds)"
-      test: "test"
-    steps:
-      - name: dummy
-        run: echo "TEST"
-
   # This workflow contains a single job called "build"
   build:
-    needs: [prepare]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -60,8 +49,5 @@ jobs:
           echo $GITHUB_REF
           echo "${GITHUB_REF#refs/heads/}":refs/heads/"$GIT_DESTINATION_BRANCH"
           echo $GIT_REMOTE
-          echo "needs.prepare.outputs.sha: ${{ needs.prepare.outputs.sha }}"
-          echo "needs.prepare.outputs.date: ${{ needs.prepare.outputs.date }}"
-          echo "needs.prepare.outputs.test: ${{ needs.prepare.outputs.test }}"
 
 
