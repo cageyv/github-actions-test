@@ -22,6 +22,9 @@ jobs:
       sha: ${{ github.sha }}
       date: $(date -u --iso-8601=seconds)
       test: "test"
+    steps:
+      - name: dummy
+        run: echo "TEST"
 
   # This workflow contains a single job called "build"
   build:
