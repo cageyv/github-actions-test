@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ github.sha }}
-      date: $(date -u --iso-8601=seconds)
+      date: "$(date -u --iso-8601=seconds)"
       test: "test"
     steps:
       - name: dummy
