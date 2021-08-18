@@ -50,9 +50,13 @@ jobs:
           echo "${GITHUB_REF#refs/heads/}":refs/heads/"$GIT_DESTINATION_BRANCH"
           echo $GIT_REMOTE
 
-      - name: Send GitHub Action trigger data to Slack workflow
+      - name: Post to a Slack channel
         id: slack
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v1.14.0
+        with:
+          channel-id: 'C02828QHA80'  # Slack channel id to post message
+          slack-message: 'posting from a github action!'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
 
