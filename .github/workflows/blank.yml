@@ -52,23 +52,25 @@ jobs:
 
       - name: Prepare
         id: prepare
+        env: 
+          PR_GIT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          echo "Prepare variables"
-          echo "$(date -u --iso-8601=seconds)"
+          echo "Prepare variables. Read files from $(pwd)"
+          echo ::set-output name=deploy_date::"$(date -u --iso-8601=seconds)"
 
-          echo "gihub.sha: ${{ github.sha }}"
-          git_sha_generated="${{ github.sha }}"
-          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated="${{ github.event.pull_request.head.sha }}"; fi
+          git_sha_generated="$GITHUB_SHA"
+          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated="$PR_GIT_SHA"; fi
           echo "$git_sha_generated"
+          echo ::set-output name=git_sha::"$git_sha_generated";     
 
-          git_branch_generated="${{ github.ref_name }}"
-          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated="${{ github.head_ref }}"; fi
-          echo "$git_branch_generated"
+          git_branch_generated="$GITHUB_REF_NAME"
+          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated="$GITHUB_HEAD_REF"; fi
+          echo ::set-output name=git_branch::"$git_branch_generated";
 
           if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=ecr_name::${{ github.event.repository.name }};fi
 
           ecr_tag_generated="$git_sha_generated"
           if [[ -f ".application_ecr_tag" ]]; then ecr_tag_generated="$(cat .application_ecr_tag)"; fi
-          echo "$ecr_tag_generated"
+          echo ::set-output name=ecr_tag::"$ecr_tag_generated";
 
 
