@@ -56,12 +56,12 @@ jobs:
           echo "Prepare variables. Read files from deployment/terraform/"
           echo "$(date -u --iso-8601=seconds)"
 
-          git_sha_generated=${{ github.sha }}
-          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated=${{ github.event.pull_request.head.sha }}; fi
+          git_sha_generated="${{ github.sha }}"
+          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated="${{ github.event.pull_request.head.sha }}"; fi
           echo "$git_sha_generated"
 
-          git_branch_generated=${{ github.ref_name }}
-          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated=${{ github.head_ref }}; fi
+          git_branch_generated="${{ github.ref_name }}"
+          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated="${{ github.head_ref }}"; fi
           echo "$git_branch_generated"
 
           if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=ecr_name::${{ github.event.repository.name }};fi
