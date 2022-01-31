@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs: # Search for needs.prepare.outputs to see where
       AWS_DEFAULT_REGION: "eu-central-1"
-      application_deploy_date: ${{ steps.prepare.outputs.deploy_date }}
+      application_deploy_date: ${{ steps.prepare.outputs.application_deploy_date }}
       application_git_sha: ${{ steps.prepare.outputs.application_git_sha }}
       application_git_branch: ${{ steps.prepare.outputs.application_git_branch }}
       application_ecr_name: ${{ steps.prepare.outputs.application_ecr_name }}
@@ -62,31 +62,21 @@ jobs:
 
       - name: Prepare
         id: prepare
-        env: 
-          GITHUB_PR_GIT_SHA: ${{ github.event.pull_request.head.sha }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: |
           echo "Prepare variables. Read files from $GITHUB_WORKSPACE"
-          echo "::set-output name=application_deploy_date::$(date -u --iso-8601=seconds)"
+          echo ::set-output name=application_deploy_date::"$(date -u --iso-8601=seconds)"
 
-          if [[ "$GITHUB_EVENT_NAME" -eq "pull_request" ]]; then 
-            echo "::set-output name=application_git_sha::$GITHUB_PR_GIT_SHA"
-            echo "::set-output name=application_git_branch::$GITHUB_HEAD_REF"
+          if [[ ${{ github.event_name }} -eq "pull_request" ]]; then 
+            echo ::set-output name=application_git_sha::"$(echo ${{ github.event.pull_request.head.sha }})"
+            echo ::set-output name=application_git_branch::"$(echo ${{ github.head_ref }})"
+            application_ecr_tag=$(echo ${{ github.event.pull_request.head.sha }})
           else
-            echo "::set-output name=application_git_sha::$GITHUB_SHA"
-            echo "::set-output name=application_git_branch::$GITHUB_REF_NAME"
+            echo ::set-output name=application_git_sha::"$(echo ${{ github.sha }})"
+            echo ::set-output name=application_git_branch::"$(echo ${{ github.ref_name }})"
+            application_ecr_tag=$(echo ${{ github.sha }})
           fi
 
-          if [[ -f ".application_ecr_tag" ]]; then
-            echo "::set-output name=application_ecr_tag::$(cat .application_ecr_name)"
-          else
-            if [[ "$GITHUB_EVENT_NAME" -eq "pull_request" ]]; then 
-              echo "::set-output name=application_ecr_tag::$GITHUB_PR_GIT_SHA"
-            else
-              echo "::set-output name=application_ecr_tag::$GITHUB_SHA"
-            fi
-          fi
-
+          if [[ -f ".application_ecr_tag" ]]; then echo ::set-output name=application_ecr_tag::"$(cat .application_ecr_name)"; else echo ::set-output name=application_ecr_tag::"$application_ecr_tag"; fi
           if [[ -f ".application_ecr_name" ]]; then echo "::set-output name=application_ecr_name::$(cat .application_ecr_name)"; else echo "::set-output name=application_ecr_name::${{ github.event.repository.name }}"; fi
           if [[ -f ".aws_ecr_client_ignore_cve_level" ]]; then echo ::set-output name=ignore_cve_level::"$(cat .aws_ecr_client_ignore_cve_level)"; else echo ::set-output name=ignore_cve_level::"";fi
           if [[ -f ".aws_ecr_client_ignore_cve" ]]; then echo ::set-output name=ignore_cve::"$(cat .aws_ecr_client_ignore_cve)"; else echo ::set-output name=ignore_cve::"";fi
