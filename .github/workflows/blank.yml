@@ -53,9 +53,10 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          echo "Prepare variables. Read files from deployment/terraform/"
+          echo "Prepare variables"
           echo "$(date -u --iso-8601=seconds)"
 
+          echo "gihub.sha: ${{ github.sha }}"
           git_sha_generated="${{ github.sha }}"
           if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated="${{ github.event.pull_request.head.sha }}"; fi
           echo "$git_sha_generated"
