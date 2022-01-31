@@ -23,10 +23,10 @@ jobs:
     outputs: # Search for needs.prepare.outputs to see where
       AWS_DEFAULT_REGION: "eu-central-1"
       deploy_date: ${{ steps.prepare.outputs.deploy_date }}
-      git_sha: ${{ steps.prepare.outputs.git_sha }}
-      git_branch: ${{ steps.prepare.outputs.git_branch }}
-      application_ecr_name: ${{ steps.prepare.outputs.ecr_name }}
-      application_ecr_tag: ${{ steps.prepare.outputs.ecr_tag }}      
+      application_git_sha: ${{ steps.prepare.outputs.application_git_sha }}
+      application_git_branch: ${{ steps.prepare.outputs.application_git_branch }}
+      application_ecr_name: ${{ steps.prepare.outputs.application_ecr_name }}
+      application_ecr_tag: ${{ steps.prepare.outputs.application_ecr_tag }}      
       AWS_ECR_CLIENT_IGNORE_CVE_LEVEL: ${{ steps.prepare.outputs.ignore_cve_level }}
       AWS_ECR_CLIENT_IGNORE_CVE: ${{ steps.prepare.outputs.ignore_cve }}
       allow_deploy_to_prod: ${{ steps.prepare.outputs.allow_deploy_to_prod }}    
@@ -69,26 +69,26 @@ jobs:
           echo ::set-output name=deploy_date::"$(date -u --iso-8601=seconds)"
 
           if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
-            echo ::set-output name=git_sha::"$PR_GIT_SHA";
+            echo ::set-output name=application_git_sha::"$PR_GIT_SHA";
           else
-            echo ::set-output name=git_sha::"$GITHUB_SHA"
+            echo ::set-output name=application_git_sha::"$GITHUB_SHA"
           fi
 
           if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
-            echo ::set-output name=git_branch::"$GITHUB_HEAD_REF";
+            echo ::set-output name=application_git_branch::"$GITHUB_HEAD_REF";
           else
-            echo ::set-output name=git_branch::"$GITHUB_REF_NAME"
+            echo ::set-output name=application_git_branch::"$GITHUB_REF_NAME"
           fi          
 
-          if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=ecr_name::${{ github.event.repository.name }};fi
+          if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=application_ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=application_ecr_name::${{ github.event.repository.name }};fi
 
           if [[ -f ".application_ecr_tag" ]]; then
-            echo ::set-output name=ecr_tag::"$(cat .application_ecr_name)";
+            echo ::set-output name=application_ecr_tag::"$(cat .application_ecr_name)";
           else
             if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
-              echo ::set-output name=ecr_tag::"$PR_GIT_SHA";
+              echo ::set-output name=application_ecr_tag::"$PR_GIT_SHA";
             else
-              echo ::set-output name=ecr_tag::"$GITHUB_SHA"
+              echo ::set-output name=application_ecr_tag::"$GITHUB_SHA"
             fi
           fi
 
@@ -109,7 +109,8 @@ jobs:
 
       - name: Test Out
         run: |
-          echo "${{ needs.prepare.outputs.git_sha }}"
-          echo "${{ needs.prepare.outputs.deploy_date }}"
+          echo "${{ needs.prepare.outputs.application_git_sha }}"
+          echo "${{ needs.prepare.outputs.application_deploy_date }}"
           echo "${{ needs.prepare.outputs.application_ecr_name }}"
+          echo "${{ needs.prepare.outputs.application_ecr_tag }}"          
 
