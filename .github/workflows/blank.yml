@@ -17,9 +17,19 @@ on:
 jobs:
 
   # This workflow contains a single job called "build"
-  build:
+  prepare:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    outputs: # Search for needs.prepare.outputs to see where
+      AWS_DEFAULT_REGION: "eu-central-1"
+      deploy_date: ${{ steps.prepare.outputs.deploy_date }}
+      git_sha: ${{ steps.prepare.outputs.git_sha }}
+      git_branch: ${{ steps.prepare.outputs.git_branch }}
+      application_ecr_name: ${{ steps.prepare.outputs.ecr_name }}
+      application_ecr_tag: ${{ steps.prepare.outputs.ecr_tag }}      
+      AWS_ECR_CLIENT_IGNORE_CVE_LEVEL: ${{ steps.prepare.outputs.ignore_cve_level }}
+      AWS_ECR_CLIENT_IGNORE_CVE: ${{ steps.prepare.outputs.ignore_cve }}
+      allow_deploy_to_prod: ${{ steps.prepare.outputs.allow_deploy_to_prod }}    
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -55,22 +65,51 @@ jobs:
         env: 
           PR_GIT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          echo "Prepare variables. Read files from $(pwd)"
+          echo "Prepare variables. Read files from $GITHUB_WORKSPACE"
           echo ::set-output name=deploy_date::"$(date -u --iso-8601=seconds)"
 
-          git_sha_generated="$GITHUB_SHA"
-          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated="$PR_GIT_SHA"; fi
-          echo "$git_sha_generated"
-          echo ::set-output name=git_sha::"$git_sha_generated";     
+          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
+            echo ::set-output name=git_sha::"$PR_GIT_SHA";
+          else
+            echo ::set-output name=git_sha::"$GITHUB_SHA"
+          fi
 
-          git_branch_generated="$GITHUB_REF_NAME"
-          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated="$GITHUB_HEAD_REF"; fi
-          echo ::set-output name=git_branch::"$git_branch_generated";
+          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
+            echo ::set-output name=git_branch::"$GITHUB_HEAD_REF";
+          else
+            echo ::set-output name=git_branch::"$GITHUB_REF_NAME"
+          fi          
 
           if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=ecr_name::${{ github.event.repository.name }};fi
 
-          ecr_tag_generated="$git_sha_generated"
-          if [[ -f ".application_ecr_tag" ]]; then ecr_tag_generated="$(cat .application_ecr_tag)"; fi
-          echo ::set-output name=ecr_tag::"$ecr_tag_generated";
+          if [[ -f ".application_ecr_tag" ]]; then
+            echo ::set-output name=ecr_tag::"$(cat .application_ecr_name)";
+          else
+            if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then 
+              echo ::set-output name=ecr_tag::"$PR_GIT_SHA";
+            else
+              echo ::set-output name=ecr_tag::"$GITHUB_SHA"
+            fi
+          fi
 
+          if [[ -f ".aws_ecr_client_ignore_cve_level" ]]; then echo ::set-output name=ignore_cve_level::"$(cat .aws_ecr_client_ignore_cve_level)"; else echo ::set-output name=ignore_cve_level::"";fi
+          if [[ -f ".aws_ecr_client_ignore_cve" ]]; then echo ::set-output name=ignore_cve::"$(cat .aws_ecr_client_ignore_cve)"; else echo ::set-output name=ignore_cve::"";fi
+          if [[ -f ".skip_promotion_to_prod" ]]; then echo ::set-output name=allow_deploy_to_prod::; else echo ::set-output name=allow_deploy_to_prod::"true";fi
+
+
+  # This workflow contains a single job called "build"
+  test-output:  
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: [prepare]    
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Test Out
+        run: |
+          echo "${{ needs.prepare.outputs.git_sha }}"
+          echo "${{ needs.prepare.outputs.deploy_date }}"
+          echo "${{ needs.prepare.outputs.application_ecr_name }}"
 
