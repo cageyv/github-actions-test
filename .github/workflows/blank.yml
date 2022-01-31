@@ -50,5 +50,24 @@ jobs:
           echo "${GITHUB_REF#refs/heads/}":refs/heads/"$GIT_DESTINATION_BRANCH"
           echo $GIT_REMOTE
 
+      - name: Prepare
+        id: prepare
+        run: |
+          echo "Prepare variables. Read files from deployment/terraform/"
+          echo "$(date -u --iso-8601=seconds)"
+
+          git_sha_generated=${{ github.sha }}
+          if [[ ${{ github.event_name }} -eq 'pull_request' ]]; then git_sha_generated=${{ github.event.pull_request.head.sha }}; fi
+          echo "$git_sha_generated"
+
+          git_branch_generated=${{ github.ref_name }}
+          if [[ ${{ github.event_name  }} -eq 'pull_request' ]]; then git_branch_generated=${{ github.head_ref }}; fi
+          echo "$git_branch_generated"
+
+          if [[ -f ".application_ecr_name" ]]; then echo ::set-output name=ecr_name::"$(cat .application_ecr_name)"; else echo ::set-output name=ecr_name::${{ github.event.repository.name }};fi
+
+          ecr_tag_generated="$git_sha_generated"
+          if [[ -f ".application_ecr_tag" ]]; then ecr_tag_generated="$(cat .application_ecr_tag)"; fi
+          echo "$ecr_tag_generated"
 
 
